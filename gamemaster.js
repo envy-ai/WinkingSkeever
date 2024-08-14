@@ -18,6 +18,25 @@ class GameMaster {
         this.eventPromptTemplate = Handlebars.compile(config.gamemaster_event_prompt);
     }
 
+    truncateUnfinishedSentence(paragraph) {
+        // Regular expression to match a sentence ending with a period, exclamation mark, or question mark.
+        const sentenceEndPattern = /([.!?])\s*/g;
+    
+        // Find the last match of a complete sentence
+        let lastCompleteSentenceIndex = -1;
+        let match;
+        while ((match = sentenceEndPattern.exec(paragraph)) !== null) {
+            lastCompleteSentenceIndex = sentenceEndPattern.lastIndex;
+        }
+    
+        // If there's a complete sentence, truncate the paragraph to the last complete sentence
+        if (lastCompleteSentenceIndex !== -1) {
+            return paragraph.substring(0, lastCompleteSentenceIndex).trim();
+        }
+    
+        // If no complete sentence is found, return an empty string or the original paragraph depending on your use case
+        return paragraph;
+    }
     /**
      * Travel from one location to another.
      * @param {string} start - The starting location.
@@ -38,7 +57,7 @@ class GameMaster {
 
         try {
             response = await this.client.request('chat/completions', { prompt: prompt, max_tokens: 250 });
-            journey = response.choices[0].message.content;
+            journey = this.truncateUnfinishedSentence(response.choices[0].message.content);
         } catch (error) {
             console.error('Error:', error);
             console.log(prompt);
@@ -52,7 +71,7 @@ class GameMaster {
         let description;
         try {
             response = await this.client.request('chat/completions', { prompt: prompt, max_tokens: 250 });
-            description = response.choices[0].message.content;
+            description = this.truncateUnfinishedSentence(response.choices[0].message.content);
             journey += description;
         } catch (error) {
             console.error('Error:', error);
@@ -76,9 +95,10 @@ class GameMaster {
         let response;
 
         try {
-            console.log("New event: " + event_type);
+            console.log("New event: ")
+            console.log(event_type);
             response = await this.client.request('chat/completions', { prompt: prompt, max_tokens: 250 });
-            return response.choices[0].message.content;
+            return this.truncateUnfinishedSentence(response.choices[0].message.content);
         } catch (error) {
             console.error('Error:', error);
             console.log(prompt);
