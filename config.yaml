@@ -36,7 +36,7 @@ character_prompt: |
 
   Note: Despite the fantasy setting, keep the language modern, conversational, and informal.  "Hey, how's it going?" is more appropriate than "Greetings, friend!"
 
-  You are {{{character.name}}}.  The response must be a single JSON object with a 'speaker' attribute with your name in it and a 'text' attribute that has your dialogue. You can optionally ad a 'travel' attribute with the party's intended destination (NAME OF THE FINAL DESTINATION ONLY) if you wish for the party to travel somewhere else. There will be no text or other characters outside the JSON string.
+  You are {{{character.name}}}.  The response must be a single JSON object with a "speaker" attribute with your name in it and a "text" attribute that has your dialogue. You can optionally add a "travel" attribute with the party's intended destination (NAME OF THE FINAL DESTINATION ONLY) if you wish for the party to travel somewhere else. There will be no text or other characters outside the JSON string.
 
     Here is the conversation so far:
 
@@ -56,7 +56,7 @@ manager_prompt: >
   {{{this}}}
   {{/each}}
 
-  Please choose the next character to speak.  The response must be a single JSON object with a 'reason' attribute set to one short sentence about who you are choosing and why, and a 'character' attribute set to the character you are choosing.  There should be no text or other characters outside the JSON string.
+  Please choose the next character to speak.  The response must be a single JSON object with a "reason" attribute set to one short sentence about who you are choosing and why, and a "character" attribute set to the character you are choosing.  There should be no text or other characters outside the JSON string.
 gamemaster_journey_prompt: >
   Here is the conversation so far:
 
@@ -75,7 +75,7 @@ gamemaster_event_prompt: >
   {{{conversation}}}
   
   Your job is to create a short but engaging description of an event that happens at {{{location}}} while the party is there. If something is already going on, build on it.  If nothing is happening, make up something interesting and random. This could be a random encounter, a quest, a natural disaster, or anything else that might happen in the world of Skyrim.  Describe the event now, and keep it short -- four sentences at most. The event should be {{{event_type}}}.
-event_frequency: 0.1
+event_frequency: 0.2
 min_time_between_events: 6
 event_types:
   - an attack by something other than a dragon (you choose who or what attacks and how)
@@ -88,6 +88,7 @@ event_types:
   - something that quickly becomes a problem
   - comedic slapstick
   - utter chaos
+  - something directly related to the conversation
 llm_settings:
   max_tokens: 250
   temperature: 0.7
@@ -96,5 +97,5 @@ llm_settings:
   model: cognitivecomputations/dolphin-2.9.1-llama-3-70b
   stop_sequence: "}"
 api_url: http://192.168.1.2:5001/v1
-# api_url: https://api.deepinfra.com/v1/openai
+#api_url: https://api.deepinfra.com/v1/openai
 api_key: your_key_here

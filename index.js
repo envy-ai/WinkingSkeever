@@ -57,12 +57,12 @@ function parseResponse(response) {
         const character = response.speaker;
         const text = response.text;
         let location = '';
-        if('travel' in response && travel) {
+        if('travel' in response && response.travel) {
             location = response.travel;
         }
         return { status: 'ok', character: character, text: text, location: location };
     } catch(error) {
-        console.log("Error parsing response" + error);
+        console.log("Error parsing response: " + error);
         console.log("Response: " + response);
         return { status: 'error', error: 'Error parsing response', response: response };
     }
@@ -150,13 +150,16 @@ async function runLoop() {
             }
 
             // Do an event one round in 10
-            if(wait_for_events == 0) {
+            console.log("Wait for events: " + wait_for_events);
+            if(wait_for_events <= 0) {
+                let rnd = Math.random();
+                console.log("Event check: " + rnd);
                 if(Math.random() < config.event_frequency) {
                     let event = await gameMaster.do_event(location.data.name);
                     location.conversation += "\n" + event + "\n";
                     console.log(event);
-                }
-                wait_for_events = config.min_time_between_events;
+                    wait_for_events = config.min_time_between_events;
+                }                
             } else {
                 wait_for_events--;
             }
