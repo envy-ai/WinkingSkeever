@@ -31,7 +31,7 @@ class GameMaster {
     
         // If there's a complete sentence, truncate the paragraph to the last complete sentence
         if (lastCompleteSentenceIndex !== -1) {
-            return paragraph.substring(0, lastCompleteSentenceIndex).trim();
+            return paragraph.substring(0, lastCompleteSentenceIndex).trim() + "\n\n";
         }
     
         // If no complete sentence is found, return an empty string or the original paragraph depending on your use case
