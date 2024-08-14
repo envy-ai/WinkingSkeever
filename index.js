@@ -9,13 +9,16 @@ const config = require('./config');
 
 const Character = require('./character');
 const Manager = require('./manager');
+const GameMaster = require('./gamemaster');
 
 
 // Replace with your OpenAI API key
-const apiKey = 'your-api-key-here';
+//const apiKey = 'your-api-key-here';
+const apiKey = 'dz83jkliZnXqIk7RuvlSgxDpr8Z9LPsL';
 
 // Initialize the OpenAI client
-const client = new OpenAIClient(apiKey, 'http://192.168.1.2:5001/v1');
+const client = new OpenAIClient(config.api_key, config.api_url);
+//const client = new OpenAIClient(apiKey, 'https://api.deepinfra.com/v1/openai');
 
 // Local location info.yaml from location directory into global.location
 
@@ -34,6 +37,7 @@ for(character of characters) {
 
 // Set up the manager
 var manager = new Manager(client);
+var gameMaster = new GameMaster(client);
 
 // The response from the character should be in the json format: { character: 'character speaking', text: 'response text' }
 function parseResponse(response) {
@@ -42,9 +46,9 @@ function parseResponse(response) {
     try {
         response = JSON.parse(trimAroundJson(response));
     }
-    catch {
-        console.log("Error parsing response");
-        console.log(response);
+    catch(error) {
+        console.log("Error parsing response: " + error);
+        console.log("Response: " + response);
         return { status: 'error', error: 'Error parsing response', response: response };
     }
 
@@ -52,10 +56,14 @@ function parseResponse(response) {
     try {
         const character = response.speaker;
         const text = response.text;
-        return { status: 'ok', character: character, text: text };
-    } catch {
-        console.log("Error parsing response");
-        console.log(response);
+        let location = '';
+        if('travel' in response && travel) {
+            location = response.travel;
+        }
+        return { status: 'ok', character: character, text: text, location: location };
+    } catch(error) {
+        console.log("Error parsing response" + error);
+        console.log("Response: " + response);
         return { status: 'error', error: 'Error parsing response', response: response };
     }
 
@@ -92,12 +100,15 @@ function parseManagerResponse(response) {
 async function runLoop() {
     let previousCharacter = '';
     let character = '';
+    let nextCharacter = '';
+    let wait_for_events = 0;
     while(1) {
         if(previousCharacter === '') {
             // Randomly select a starting character from location.characters
             let characters = Object.keys(location.characters);
             character = characters[Math.floor(Math.random() * characters.length)];
         } else {
+            /*
             let character_json = parseManagerResponse(await manager.getNextCharacter(previousCharacter));
 
             if(character_json.status === 'error') {
@@ -106,14 +117,15 @@ async function runLoop() {
                 continue;
             }
             character = character_json.character;
+            */
+            character = nextCharacter;
         }
 
         try {
             let response = parseResponse(await location.characters[character].generateResponse());
 
             if(response.status === 'error') {
-                console.log("Error generating response");
-                console.log(response.error);
+                console.log("Error generating response: " + response.error);
                 continue;
             }
 
@@ -124,18 +136,65 @@ async function runLoop() {
             }
 
             location.conversation += `${response.character}: ${response.text}\n\n`;
+            nextCharacter = getNextSpeaker(character, response.text);
             //console.log(character + ": " + response.text.trim() + "\n\n");
+            
+
+            if(response.location !== '') {
+                let journey = await gameMaster.travel(locationName, response.location);
+                location.conversation += journey.journey;
+                location.data.name = journey.location;
+                location.data.description = journey.description;
+                console.log(journey.journey);
+                //console.log(journey.description);
+            }
+
+            // Do an event one round in 10
+            if(wait_for_events == 0) {
+                if(Math.random() < config.event_frequency) {
+                    let event = await gameMaster.do_event(location.data.name);
+                    location.conversation += "\n" + event + "\n";
+                    console.log(event);
+                }
+                wait_for_events = config.min_time_between_events;
+            } else {
+                wait_for_events--;
+            }
+
             console.log(location.conversation);
             previousCharacter = character;
         }
-        catch {
-            console.log("Error generating response");
+        catch(error) {
+            console.log("Error generating response: " + error);
             console.log(character);
             continue;
         }
 
 
     }
+}
+
+/**
+ * Return the first speaker whose name is mentioned in the previous line.  If no speakers are found, choose someone other than the previous speaker.
+ * @param {string} previous_line - The previous line of text.
+ * @returns {string} - The name of the next speaker.
+ */
+function getNextSpeaker(previous_speaker, previous_line) {
+    let speakers = Object.keys(location.characters);
+    //remove previous_speaker from speakers
+    speakers = speakers.filter(speaker => speaker !== previous_speaker);
+
+    let next_speaker = speakers[Math.floor(Math.random() * speakers.length)];
+    if(previous_line === undefined) {
+        return next_speaker;
+    }
+    for(speaker of speakers) {
+        if(previous_line.includes(speaker)) {
+            next_speaker = speaker;
+            break;
+        }
+    }
+    return next_speaker;
 }
 
 runLoop();

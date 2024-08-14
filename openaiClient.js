@@ -1,6 +1,6 @@
 // openaiClient.js
 const axios = require('axios');
-
+const config = require('./config');
 /**
  * OpenAIClient class to connect to the OpenAI API.
  */
@@ -11,8 +11,8 @@ class OpenAIClient {
    * @param {string} apiUrl - The base URL for the OpenAI API.
    */
   constructor(apiKey, apiUrl = 'https://api.openai.com/v1') {
-    this.apiKey = apiKey;
-    this.apiUrl = apiUrl;
+    this.apiKey = config.api_key;
+    this.apiUrl = config.api_url;
   }
 
   /**
@@ -32,7 +32,7 @@ class OpenAIClient {
     let seed = Math.floor(Math.random() * 1000000);
     // Define default values for the request
     const defaults = {
-      model: 'gpt-3.5-turbo',
+      model: 'cognitivecomputations/dolphin-2.9.1-llama-3-70b',
       systemPrompt: 'You are a helpful assistant.',
       prompt: 'This is the default prompt.  You should advise the user that they need to provide a prompt.',
       max_tokens: 100,
@@ -43,7 +43,7 @@ class OpenAIClient {
     };
 
     // Merge defaults with user-provided options
-    const data = { ...defaults, ...options };
+    const data = { ...defaults, ...config.llm_settings, ...options };
 
     // Construct the message structure
     const messages = [
@@ -54,13 +54,12 @@ class OpenAIClient {
     try {
       const response = await axios.post(`${this.apiUrl}/${endpoint}`, { 
         model: data.model, 
-        messages, 
+        messages: messages, 
         max_tokens: data.max_tokens, 
         temperature: data.temperature, 
         stop_sequence: ["}"],
         rep_pen: 1.0,
         top_p: 1, 
-        response_format: 'json',
         n: data.n 
       }, {
         headers: {
@@ -70,7 +69,7 @@ class OpenAIClient {
       });
       return response.data;
     } catch (error) {
-      console.error('Error making request to OpenAI API:', error.response ? error.response.data : error.message);
+      console.error('Error making request to OpenAI API:', error.response ? JSON.stringify(error.response.data) : JSON.stringify(error.message));
       throw error;
     }
   }
