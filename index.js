@@ -14,7 +14,7 @@ const GameMaster = require('./gamemaster');
 
 // Replace with your OpenAI API key
 //const apiKey = 'your-api-key-here';
-const apiKey = 'dz83jkliZnXqIk7RuvlSgxDpr8Z9LPsL';
+const apiKey = 'your-api-key-here';
 
 // Initialize the OpenAI client
 const client = new OpenAIClient(config.api_key, config.api_url);
